@@ -35,6 +35,6 @@ setup(name='trytond_account_invoice_payment',
       install_requires=requires,
       entry_points="""
       [trytond.modules]
-      contract = trytond.modules.account_invoice_payment
+      account_invoice_payment = trytond.modules.account_invoice_payment
       """,
       )
