@@ -1,0 +1,30 @@
+<?xml version="1.0"?>                                                                                                                                                                  
+<!-- This file is part of Tryton.  The COPYRIGHT file at the top level of
+     this repository contains the full copyright notices and license terms. -->
+<tryton>
+	<data>
+		<record model="ir.action.wizard" id="wizard_reconcile_creditnote">
+			<field name="name">Mark as Payment</field>
+			<field name="wiz_name">account.invoice.reconcile_creditnote</field>
+			<field name="model">account.invoice</field>
+		</record> 
+
+		<record model="ir.action.keyword" id="wizard_reconcile_creditnote_keyword">
+			<field name="keyword">form_action</field>
+			<field name="model">account.invoice,-1</field>
+			<field name="action" ref="wizard_reconcile_creditnote"/>
+		</record>
+
+		<record model="ir.ui.view" id="reconcile_creditnote_init_form">
+			<field name="model">account.invoice.reconcile_creditnote.init</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<![CDATA[
+				<tree string="Opened Invoices">
+					<field name="invoice"/>
+				</tree>
+				]]>
+			</field>
+		</record>
+	</data>
+</tryton>
