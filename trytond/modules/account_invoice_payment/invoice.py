@@ -6,7 +6,7 @@ from trytond.model import ModelView, fields
 from trytond.transaction import Transaction
 from trytond.pool import Pool
 from trytond.wizard import Wizard
-from trytond.pyson import Eval
+from trytond.pyson import Eval, If
 
 log = logging.getLogger(__name__)
 
@@ -16,18 +16,26 @@ class ReconcileCreditNoteInit(ModelView):
     _description = __doc__
 
     party = fields.Many2One('party.party', 'Party', required=True, readonly=True)
+    credit_note_type = fields.Char('Type', required=True, readonly=True)
     invoice = fields.Many2One('account.invoice', 'Invoice', required=True,
                               domain=[
-                                  ('type','=','out_invoice'),
+                                  ('type','=',If(
+                                      Eval('credit_note_type') == 'out_credit_note',
+                                      'out_invoice','in_invoice')),
                                   ('state', '=','open'),
                                   ('party','=',Eval('party'))
                               ])
 
-    def default_party(self):
+    def _selected_credit_note(self):
         active_id = Transaction().context.get('active_ids')[0]
         invoice_obj = Pool().get('account.invoice')
-        invoice = invoice_obj.browse(active_id)
-        return invoice.party.id
+        return invoice_obj.browse(active_id)
+
+    def default_credit_note_type(self):
+        return self._selected_credit_note().type
+
+    def default_party(self):
+        return self._selected_credit_note().party.id
 
 ReconcileCreditNoteInit()
 
@@ -59,7 +67,7 @@ class ReconcileCreditNote(Wizard):
     def __init__(self):
         super(ReconcileCreditNote,self).__init__()
         self._error_messages.update({
-            'invoice_type': 'You can only mark credit notes as payment of' \
+            'invoice_type': 'You can only mark credit notes as payment of ' \
                 'open invoices',
             'invoice_state': 'You can only reconcile opened credit notes',
             'amount_greater_invoice_amount_to_pay': 'Amount (%s) greater than '\
@@ -71,11 +79,10 @@ class ReconcileCreditNote(Wizard):
     def _init(self, data):
         invoice_obj = Pool().get('account.invoice')
         invoice = invoice_obj.browse(data['id'])
-        if invoice.type != 'out_credit_note':
+        if invoice.type not in  ['out_credit_note', 'in_credit_note']:
             self.raise_user_error('invoice_type')
         if invoice.state != 'open':
             self.raise_user_error('invoice_state')
-        
 
         return {}
 
@@ -99,16 +106,19 @@ class ReconcileCreditNote(Wizard):
                                                                      creditnote.amount_to_pay)
         amount = creditnote.amount_to_pay
         move = move_obj.browse(creditnote.move.id)
+
         for move_line in move.lines:
             if move_line.account.id == invoice.account.id:
                 line_id = move_line.id
                 invoice_obj.write(invoice.id, {
                     'payment_lines': [('add', line_id)],
                 })
-                amount -= move_line.credit
+                if creditnote.type == 'out_credit_note':
+                    amount -= move_line.credit
+                elif creditnote.type == 'in_credit_note':
+                    amount -= move_line.debit
 
         if amount == Decimal('0.0'):
-            log.debug("amount: %d" % amount)
             invoice_obj.write(creditnote.id, {
                 'state': 'paid',
             })

@@ -17,12 +17,18 @@
 
 		<record model="ir.ui.view" id="reconcile_creditnote_init_form">
 			<field name="model">account.invoice.reconcile_creditnote.init</field>
-			<field name="type">tree</field>
+			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<![CDATA[
-				<tree string="Opened Invoices">
-					<field name="invoice"/>
-				</tree>
+				<form string="Select Opened Invoice" col="4">
+					<image name="tryton-dialog-information" colspan="4"/>
+					<newline/>
+					<label name="party"/> <field name="party"/>
+					<label name="credit_note_type"/> <field name="credit_note_type"/>
+					<group id="invoices" colspan="6" col="2">
+						<label name="invoice"/> <field name="invoice"/>
+					</group>
+				</form>
 				]]>
 			</field>
 		</record>

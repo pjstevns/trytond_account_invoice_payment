@@ -12,8 +12,6 @@ to create a payment (refund) on the invoice.
 
 Todo: 
 
-- currently only supports matching out_credit_note and out_invoice, 
-matching in_credit_note with in_invoice is a logical next step
 - currently only accepts invoices with amounts larger than the 
 credit_note. Being able to refund multiple smaller invoices with one
 credit_note would be a nice to have.
